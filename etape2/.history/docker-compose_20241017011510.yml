@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  # Service HTTP avec NGINX
+  http:
+    image: nginx:latest
+    ports:
+      - "8080:80"  # Expose le port 80 du container sur le port 8080 de l'hôte
+    volumes:
+      - ./app:/app  # Monte le répertoire app dans le container NGINX
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Configuration NGINX
+    depends_on:
+      - script  # NGINX dépend du service PHP-FPM
+      - data    # NGINX dépend aussi du service de base de données
+
+  # Service PHP avec PHP-FPM
+  script:
+    build:
+      context: .  # Utilise le répertoire actuel pour le contexte de construction
+      dockerfile: Dockerfile  # Utilise le Dockerfile créé pour construire l'image
+    volumes:
+      - ./app:/app  # Monte le répertoire app pour partager les fichiers PHP
+    depends_on:
+      - data  # PHP-FPM dépend du service de base de données
+
+  # Service Base de Données (MariaDB)
+  data:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./db_data:/var/lib/mysql  # Volume pour stocker les données de la base
+      - ./app/init.sql:/docker-entrypoint-initdb.d/init.sql  # Fichier SQL exécuté au démarrage
+    ports:
+      - "3306:3306"  # Expose le port 3306 de la base de données

@@ -1,0 +1,32 @@
+version: '3'
+
+# Service PHP avec PHP-FPM
+script:
+  build:
+    context: .
+    dockerfile: Dockerfile  # Indique que nous construisons à partir de ce Dockerfile
+  volumes:
+    - ./app:/app  # Monte le répertoire app pour partager les fichiers PHP
+  depends_on:
+    - data  # PHP-FPM dépend du service de base de données
+
+  script:
+    image: php:7.4-fpm
+    volumes:
+      - ./app:/app
+    depends_on:
+      - data # Le service script dépend du service data
+
+  # Nouveau service : base de données MariaDB
+  data:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./db_data:/var/lib/mysql
+      - ./app/init.sql:/docker-entrypoint-initdb.d/init.sql  # Fichier SQL exécuté au démarrage
+    ports:
+      - "3306:3306"

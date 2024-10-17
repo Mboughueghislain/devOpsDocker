@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  http:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/app
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - data # Le service http dépend aussi du service data maintenant
+
+  script:
+    image: php:7.4-fpm
+    volumes:
+      - ./app:/app
+    depends_on:
+      - data # Le service script dépend du service data
+
+  # Nouveau service : base de données MariaDB
+  data:
+    image: mariadb:latest # Vous pouvez aussi utiliser mysql ou postgres si nécessaire
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./db_data:/var/lib/mysql
+    ports:
+      - "3306:3306" # Port par défaut pour MySQL/MariaDB

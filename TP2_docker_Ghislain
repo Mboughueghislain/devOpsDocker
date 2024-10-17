@@ -1,0 +1,104 @@
+Etape 0:prépartion de l'environnement
+
+1- Arrêter et supprimer tous les containers existants :
+- docker stop $(docker ps -aq)
+- docker rm $(docker ps -aq)
+
+2- Création d'un répertoire pour le TP :
+- mkdir docker-tp2
+- cd docker-tp2
+- git init
+
+
+Étape 1 : Configuration de deux containers (HTTP et SCRIPT):
+
+1- Création un dossier pour l'étape 1
+- mkdir -p docker-tp2/etape1
+- cd docker-tp2/etape1
+
+2- Création d'un sous-dossier app pour héberger nos fichiers PHP : Ce répertoire servira à stocker le code PHP, qui sera monté dans les containers.
+-mkdir app
+
+3- Créer un fichier docker-compose.yml dans le répertoire docker-tp2/etape1
+
+4- Configurer NGINX pour traiter les fichiers PHP
+4.1- Création d'un sous-dossier nginx dans le répertoire etape1:
+- mkdir nginx
+
+4.2- Création d'un fichier de configuration default.conf dans le dossier nginx:
+- touch nginx/default.conf
+
+5- Création d'un fichier index.php dans le répertoire app:
+- touch app/index.php
+
+6- Lancement des containers
+6.1- Démarrage de Docker Compose depuis le répertoire etape1 :
+- docker-compose up
+
+
+Etape 2 : Ajout d'une base de données
+1- Création d'un nouveau sous-dossier pour l'étape 2 :
+- mkdir -p docker-tp2/etape2
+- cd docker-tp2/etape2
+
+2- Copie des fichiers de configuration de l’étape 1 :
+- cp -r ../../etape1/* .
+
+3- Ajout du container de base de données : Modification du fichier docker-compose.yml pour ajouter un service supplémentaire nommé data
+
+4- Créer un script PHP pour interagir avec la base de données
+4.1- Création d'un nouveau fichier PHP (test_bdd.php) dans le dossier app pour tester les interactions avec la base de données:
+- touch app/test_bdd.php
+
+5- Créons un fichier SQL d’initialisation pour s'assurer que la table my_table existe dans la base de données: 
+5.1 Création du fichier init.sql:
+- touch init.sql
+
+5.2- Modifions le service data dans docker-compose.yml pour exécuter ce script au démarrage :
+
+6- À partir du répertoire etape2, démarrons les containers avec Docker Compose :
+- docker-compose up
+
+et là nous avons une erreur "could not find driver" ce qui veut dire que le PDO pour le driver de notre base de données n'est pas installée.
+
+7- Installons l'extension du PDO dans le container de PHP-FPM et pour cela, nous installons un Dockerfile.
+
+7.1- Création du Dockerfile
+- touch Dockerfile
+
+7.2- Ajout de la configuration:
+""
+- FROM php:7.4-fpm
+
+# Installation des extensions requises pour PDO et MySQL
+RUN apt-get update && apt-get install -y libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql
+
+""
+Etape 4:
+
+1- Modification de notre docker-compose.yml pour construire l'image PHP à partir du Dockerfile en rajoutant ce script:
+
+- # Service PHP avec PHP-FPM
+script:
+  build:
+    context: .
+    dockerfile: Dockerfile  # Indique que nous construisons à partir de ce Dockerfile
+  volumes:
+    - ./app:/app  # Monte le répertoire app pour partager les fichiers PHP
+  depends_on:
+    - data  # PHP-FPM dépend du service de base de données
+
+9- Rebuild l'image et relancer les containers
+9.1- rebuild de l'image:
+-docker-compose up --build
+
+9.2- verification des container en exécution:
+- docker ps
+
+10- on accède à notre application en cours d'exécution: 
+- http://localhost:8080/test_bdd.php
+
+
+
+

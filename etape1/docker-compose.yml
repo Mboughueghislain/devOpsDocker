@@ -1,0 +1,19 @@
+version: '3'  # Version de Docker Compose
+
+services:
+  # Service HTTP avec NGINX
+  http:
+    image: nginx:latest  # Utilisation de la dernière version de l'image NGINX
+    ports:
+      - "8080:80"  # Redirection du port 8080 de l'hôte vers le port 80 du container
+    volumes:
+      - ./app:/app  # Montage du répertoire app sur le container NGINX
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Configuration NGINX
+    depends_on:
+      - script  # Dépendance sur le service script (PHP-FPM)
+
+  # Service PHP avec PHP-FPM
+  script:
+    image: php:7.4-fpm  # Utilisation de l'image PHP avec FPM (version 7.4)
+    volumes:
+      - ./app:/app  # Montage du répertoire app pour partager les fichiers PHP
